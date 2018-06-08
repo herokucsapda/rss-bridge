@@ -73,21 +73,28 @@ class InstagramBridge extends BridgeAbstract {
 
 			$item = array();
 			$item['uri'] = self::URI . 'p/' . $media->shortcode . '/';
-
-			if (isset($media->edge_media_to_caption->edges[0]->node->text)) {
-				$item['title'] = $media->edge_media_to_caption->edges[0]->node->text;
+			if (isset($data->entry_data->ProfilePage[0]->graphql->user)){
+				$item['author'] = $data->entry_data->ProfilePage[0]->graphql->user->full_name;
+				$item['title'] = $data->entry_data->ProfilePage[0]->graphql->user->username . ' @Instagram';
 			} else {
-				$item['title'] = basename($media->display_url);
+				$item['author'] = $this->getInput('u');
+				$item['title'] = $item['author'] . ' @Instagram';
+			}
+
+			$caption = '';
+			if (isset($media->edge_media_to_caption->edges[0]->node->text)) {
+				$caption = $media->edge_media_to_caption->edges[0]->node->text . '<br/>';
 			}
 
 			if(!is_null($this->getInput('u')) && $media->__typename == 'GraphSidecar') {
 				$data = $this->getInstagramStory($item['uri']);
-				$item['content'] = $data[0];
+				$item['content'] = $caption . $data[0];
 				$item['enclosures'] = $data[1];
 			} else {
-				$item['content'] = '<img src="' . htmlentities($media->display_url) . '" alt="'. $item["title"] . '" />';
+				$item['content'] = $caption . '<br/>' . '<img src="' . htmlentities($media->display_url) . '" alt="'. $item["title"] . '" />';
 				$item['enclosures'] = array($media->display_url);
 			}
+			
 
 			$item['timestamp'] = $media->taken_at_timestamp;
 
